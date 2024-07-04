@@ -28,6 +28,7 @@ import com.ecommerce.desktop.Services.ProductManagement;
 import com.ecommerce.desktop.Services.ShippingManagement;
 import com.ecommerce.desktop.Services.StoreManagement;
 import com.ecommerce.desktop.Services.TransactionManagement;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/api")
@@ -254,6 +255,37 @@ public class MainController {
       }
     } else {
       return new ResponseTemplate(500, "Failed to fetch cart", null);
+    }
+  }
+
+  @PutMapping("/shipping/{shippingId}/status/{status}")
+  public @ResponseBody ResponseTemplate updateShippingStatus(@PathVariable("shippingId") String shippingId,
+      @PathVariable("status") String status) {
+    if (shippingManagement.updateShippingStatus(shippingId, status)) {
+      return new ResponseTemplate(200, "Shipping status updated successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to update shipping status", null);
+    }
+  }
+
+  @GetMapping("/shipping/{shippingId}")
+  public @ResponseBody ResponseTemplate getShippingData(@PathVariable("shippingId") String shippingId) {
+    Shipping shippingData = shippingManagement.getShippingData(shippingId);
+    if (shippingData != null) {
+      return new ResponseTemplate(200, "Shipping data fetched successfully", shippingData);
+    } else {
+      return new ResponseTemplate(500, "Failed to fetch shipping data", null);
+    }
+  }
+
+  /// Transaction Management
+  @GetMapping("/transaction/{transactionId}")
+  public @ResponseBody ResponseTemplate getTransaction(@PathVariable("transactionId") String transactionId) {
+    Transaction transaction = transactionManagement.getTransaction(transactionId);
+    if (transaction != null) {
+      return new ResponseTemplate(200, "Transaction fetched successfully", transaction);
+    } else {
+      return new ResponseTemplate(500, "Failed to fetch transaction", null);
     }
   }
 

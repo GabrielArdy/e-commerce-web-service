@@ -159,6 +159,20 @@ public class ShippingManagement {
     return shippingRepository.findAll();
   }
 
+  public @ResponseBody Shipping getShippingData(String id) {
+    return shippingRepository.findById(id).orElse(null);
+  }
+
+  public @ResponseBody boolean updateShippingStatus(String id, String status) {
+    Shipping shipping = shippingRepository.findById(id).orElse(null);
+    if (shipping != null) {
+      shipping.setShippingStatus(status);
+      shippingRepository.save(shipping);
+      return true;
+    }
+    return false;
+  }
+
   private double calculateShippingCost(String shippingType, int quantity) {
     double baseCost;
 
