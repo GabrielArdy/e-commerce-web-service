@@ -12,7 +12,7 @@ public class cart {
     private String userId;
     private String status;
     private String timestamp;
-    private List<cartItem> items;
+    private List<cartItem> productList;
 
     public String getUserId() {
         return userId;
@@ -26,16 +26,16 @@ public class cart {
         return status;
     }
 
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getTimestamp() {
         return timestamp;
     }
 
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
     }
 
     public String getId() {
@@ -46,15 +46,12 @@ public class cart {
         this.id = id;
     }
 
-    public List<cartItem> getItems() {
-        return items;
+    public List<cartItem> getproductList() {
+        return productList;
     }
 
-    public void setItems(List<cartItem> items) {
-        this.items = items;
+    public void setproductList(List<cartItem> productList) {
+        this.productList = productList;
     }
 
-    public double getTotalPrice() {
-        return items.stream().mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity()).sum();
-    }
 }

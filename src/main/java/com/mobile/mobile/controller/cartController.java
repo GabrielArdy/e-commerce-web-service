@@ -5,28 +5,24 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import com.mobile.mobile.model.cart;
 import com.mobile.mobile.model.cartItem;
-import com.mobile.mobile.model.order;
 import com.mobile.mobile.model.product;
 import com.mobile.mobile.model.productRequest.AddProductRequest;
 import com.mobile.mobile.model.productRequest.CartRequest;
 import com.mobile.mobile.model.productRequest.DeleteProductRequest;
 import com.mobile.mobile.repository.cartRepository;
-import com.mobile.mobile.repository.orderRepository;
 import com.mobile.mobile.repository.productRepository;
+import com.mobile.mobile.service.cartService;
 
 @Controller
 @RequestMapping(path = "/cart")
@@ -38,13 +34,18 @@ public class cartController {
     private productRepository productRepository;
 
     @Autowired
-    private orderRepository orderRepository;
+    private cartService cartService;
 
     @PostMapping("/create")
     public @ResponseBody ResponseEntity<String> createCart(@RequestBody cart newCart) {
+        if (newCart.getId() == null || newCart.getId().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cart ID cannot be empty");
+        }
+
         if (cartRepository.existsById(newCart.getId())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Cart with this ID already exists");
         }
+
         newCart.setStatus("pending"); // Set initial status to pending
         cartRepository.insert(newCart);
         return ResponseEntity.status(HttpStatus.CREATED).body("Cart created successfully");
@@ -56,10 +57,10 @@ public class cartController {
         Optional<product> productOptional = productRepository.findById(request.getProductId());
 
         if (!cartOptional.isPresent()) {
-            return ResponseEntity.status(404).body("Cart not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cart not found");
         }
         if (!productOptional.isPresent()) {
-            return ResponseEntity.status(404).body("Product not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
         }
 
         cart cart = cartOptional.get();
@@ -68,42 +69,39 @@ public class cartController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Cannot add product to a paid cart");
         }
 
-        List<cartItem> listItem = cart.getItems();
-        if (listItem == null) {
-            listItem = new ArrayList<>(); // jika list List<cartItem> kosong dibuatkan
+        List<cartItem> productList = cart.getproductList();
+        if (productList == null) {
+            productList = new ArrayList<>();
+            cart.setproductList(productList);
         }
 
-        product product = productOptional.get();
+        String productId = request.getProductId();
         boolean productExists = false;
-        for (int i = 0; i < listItem.size(); i++) { // isi listItem dicek satu satu
-            cartItem item = listItem.get(i); // ubah variabel
-            if (item.getProduct().getId().equals(product.getId())) {
-                // jika item id sama dengan produk yang baru ditambahkan maka kuantitas akan
-                // ditambahkan sesuai jumlah yang dimasukan
+        for (cartItem item : productList) {
+            if (item.getProductId().equals(productId)) {
                 item.setQuantity(item.getQuantity() + request.getJumlah());
-                productExists = true; // skip if dibawah
+                productExists = true;
                 break;
             }
         }
 
-        if (productExists == false) { // jika barang baru yang dimasukan belum ada
-            cartItem cartItem = new cartItem(); // buat item baru
-            cartItem.setProduct(product);
-            cartItem.setQuantity(request.getJumlah());
-            listItem.add(cartItem); // masukan kedalam listItem
+        if (!productExists) {
+            cartItem newItem = new cartItem();
+            newItem.setProductId(productId);
+            newItem.setQuantity(request.getJumlah());
+            productList.add(newItem);
         }
 
-        cart.setItems(listItem); // save ke cart listItems
-        cartRepository.save(cart); // simpen ulang semua objek Sesuai model
+        cartRepository.save(cart);
         return ResponseEntity.ok("Product added to cart");
     }
 
-    @GetMapping("/view")
+    @PostMapping("/view")
     public @ResponseBody ResponseEntity<cart> viewCart(@RequestBody CartRequest request) {
         Optional<cart> cartOptional = cartRepository.findById(request.getCartId());
 
         if (!cartOptional.isPresent()) {
-            return ResponseEntity.status(404).body(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
         return ResponseEntity.ok(cartOptional.get());
@@ -114,14 +112,14 @@ public class cartController {
         Optional<cart> cartOptional = cartRepository.findById(request.getCartId());
 
         if (!cartOptional.isPresent()) {
-            return ResponseEntity.status(404).body("Cart not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cart not found");
         }
 
         cart cart = cartOptional.get();
-        List<cartItem> items = cart.getItems();
-        if (items != null) {
-            items.removeIf(item -> item.getProduct().getId().equals(request.getProductId()));
-            cart.setItems(items);
+        List<cartItem> productList = cart.getproductList();
+        if (productList != null) {
+            productList.removeIf(item -> item.getProductId().equals(request.getProductId()));
+            cart.setproductList(productList);
             cartRepository.save(cart);
         }
 
@@ -129,35 +127,35 @@ public class cartController {
     }
 
     @PostMapping("/checkout")
-    public @ResponseBody ResponseEntity<String> checkout(@RequestBody CartRequest request) {
+    public @ResponseBody ResponseEntity<Object> checkout(@RequestBody CartRequest request) {
         Optional<cart> cartOptional = cartRepository.findById(request.getCartId());
 
         if (!cartOptional.isPresent()) {
-            return ResponseEntity.status(404).body("Cart not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cart not found");
         }
 
         cart cart = cartOptional.get();
-        double total = cart.getTotalPrice();
 
-        // Set cart status to "Waiting for payment" and add timestamp
+        if (cart.getproductList() == null || cart.getproductList().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No product added, Cart is empty");
+        }
+        if (!cart.getStatus().equals("pending")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cart is " + cart.getStatus());
+        }
+
+        double total = cartService.getTotalPrice(cart);
+
         cart.setStatus("Waiting for payment");
         cart.setTimestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
         cartRepository.save(cart);
 
-        return ResponseEntity.ok("Checkout completed. Total amount: " + total);
+        // Prepare response JSON
+        Map<String, Object> response = new HashMap<>();
+        response.put("total", total);
+        response.put("message", "Checkout completed. Order created");
+        response.put("status", "success");
 
-        // // Create a new order
-        // order newOrder = new order();
-        // newOrder.setOrderId(UUID.randomUUID().toString());
-        // newOrder.setStatus("paid");
-        // newOrder.setPaymentMethod("Specify your payment method here");
-        // newOrder.setTimestamp(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new
-        // Date()));
-
-        // // Save the new order
-        // orderRepository.save(newOrder); // Correct method call for saving the order
-
-        // return ResponseEntity.ok("Checkout completed. Total amount: " + total + ".
-        // Order ID: " + newOrder.getOrderId());
+        return ResponseEntity.ok(response);
     }
+
 }

@@ -53,13 +53,23 @@ public class userController {
     @DeleteMapping("/delete")
     public @ResponseBody ResponseEntity<String> deleteUser(@RequestBody Map<String, String> request) {
         String username = request.get("username");
+        String password = request.get("password");
+
         if (username == null || username.isEmpty()) {
             return ResponseEntity.badRequest().body("Username is required");
         }
 
-        user user = ur.findByUsername(username);
-        if (user == null) {
+        if (password == null || password.isEmpty()) {
+            return ResponseEntity.badRequest().body("Password is required");
+        }
+
+        user existingUser = ur.findByUsername(username);
+        if (existingUser == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        if (!existingUser.getPassword().equals(password)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect password");
         }
 
         ur.deleteByUsername(username);

@@ -3,6 +3,8 @@ package com.mobile.mobile.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 @Document(collection = "orders")
 public class order {
     @Id
@@ -10,6 +12,9 @@ public class order {
     private String cartId;
     private String status;
     private String paymentMethod;
+    private String timestamp;
+    private String userId;
+    private List<cartItem> productList;
 
     public String getOrderId() {
         return orderId;
@@ -51,5 +56,19 @@ public class order {
         this.timestamp = timestamp;
     }
 
-    private String timestamp;
+    public List<cartItem> getProductList() {
+        return productList;
+    }
+
+    public void setProductList(List<cartItem> productList) {
+        this.productList = productList;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 }
