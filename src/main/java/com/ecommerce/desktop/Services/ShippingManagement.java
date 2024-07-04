@@ -173,6 +173,11 @@ public class ShippingManagement {
     return false;
   }
 
+  public @ResponseBody boolean getShippingByReceipt(String receipt) {
+    List<Shipping> shipping = shippingRepository.findByReceipt(receipt);
+    return shipping != null;
+  }
+
   private double calculateShippingCost(String shippingType, int quantity) {
     double baseCost;
 
