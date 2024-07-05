@@ -53,6 +53,10 @@ public class TransactionManagement {
     return false;
   }
 
+  public Transaction getTransaction(String id) {
+    return transactionRepository.findById(id).orElse(null);
+  }
+
   public String CodePaymentChecker(String code) {
     if (code.equals("CC")) {
       return "Credit Card";

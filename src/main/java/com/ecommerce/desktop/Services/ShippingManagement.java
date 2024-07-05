@@ -14,9 +14,11 @@ import com.ecommerce.desktop.Model.Cart;
 import com.ecommerce.desktop.Model.Shipping;
 import com.ecommerce.desktop.Model.Store;
 import com.ecommerce.desktop.Model.Transaction;
+import com.ecommerce.desktop.Model.User;
 import com.ecommerce.desktop.Repository.ShippingRepository;
 import com.ecommerce.desktop.Repository.StoreRepository;
 import com.ecommerce.desktop.Repository.TransactionRepository;
+import com.ecommerce.desktop.Repository.UserRepository;
 import com.ecommerce.desktop.Util.Randomizer;
 
 @Service
@@ -31,10 +33,21 @@ public class ShippingManagement {
   @Autowired
   private TransactionRepository transactionRepository;
 
+  @Autowired
+  private UserRepository userRepository;
+
   public @ResponseBody boolean generateShippingData(Cart cart) {
     if (cart == null || cart.getProducts().isEmpty()) {
       return false;
     }
+
+    // Fetch user details
+    Optional<User> userOptional = userRepository.findById(cart.getUserId());
+    if (!userOptional.isPresent()) {
+      return false;
+    }
+
+    User user = userOptional.get();
 
     Shipping shipping = new Shipping();
     ProductList product = cart.getProducts().get(0);
@@ -48,7 +61,8 @@ public class ShippingManagement {
 
     shipping.setId("shp-" + cart.getUserId() + "-" + Randomizer.generateRandomNumber(5));
     shipping.setSender(new Person(store.getStoreName(), store.getTelpNumber(), store.getLocation()));
-    shipping.setReceiver(new Person("Dummy", "08123456789", "Jakarta"));
+    // Set the receiver to the actual user details
+    shipping.setReceiver(new Person(user.getName(), user.getTelepon(), user.getAddress()));
     shipping.setShippingType("Standard");
 
     double shippingCost = calculateShippingCost(shipping.getShippingType(), product.getQuantity());
@@ -68,7 +82,6 @@ public class ShippingManagement {
     shippingRepository.save(shipping);
     return true;
   }
-
   // public @ResponseBody boolean shippingData(String TransactionId) {
   // Transaction transaction =
   // transactionRepository.findById(TransactionId).orElse(null);
@@ -159,6 +172,36 @@ public class ShippingManagement {
     return shippingRepository.findAll();
   }
 
+  public @ResponseBody Shipping getShippingData(String id) {
+    return shippingRepository.findById(id).orElse(null);
+  }
+
+  public @ResponseBody boolean updateShippingStatus(String id, String status) {
+    Shipping shipping = shippingRepository.findById(id).orElse(null);
+    if (shipping != null) {
+      if (status.equals("IT")) {
+        shipping.setShippingStatus(ShippingStatusChecker(status));
+      } else if (status.equals("DL")) {
+        shipping.setShippingStatus(ShippingStatusChecker(status));
+      } else if (status.equals("RT")) {
+        shipping.setShippingStatus(ShippingStatusChecker(status));
+      } else if (status.equals("PH")) {
+        shipping.setShippingStatus(ShippingStatusChecker(status));
+      } else {
+        return false;
+
+      }
+      shippingRepository.save(shipping);
+      return true;
+    }
+    return false;
+  }
+
+  public @ResponseBody boolean getShippingByReceipt(String receipt) {
+    List<Shipping> shipping = shippingRepository.findByReceipt(receipt);
+    return shipping != null;
+  }
+
   private double calculateShippingCost(String shippingType, int quantity) {
     double baseCost;
 
@@ -189,6 +232,23 @@ public class ShippingManagement {
         return "SD-" + Randomizer.generateRandomNumber(10);
       default:
         throw new IllegalArgumentException("Invalid shipping type: " + shippingType);
+    }
+  }
+
+  private String ShippingStatusChecker(String code) {
+    if (code.equals("IT")) {
+      return "In Transit";
+    }
+    if (code.equals("DL")) {
+      return "Delivered";
+    }
+    if (code.equals("RT")) {
+      return "Returned";
+    }
+    if (code.equals("PH")) {
+      return "Processing In Hub";
+    } else {
+      return "Invalid Shipping Status";
     }
   }
 }

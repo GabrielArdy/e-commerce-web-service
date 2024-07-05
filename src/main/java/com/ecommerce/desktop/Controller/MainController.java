@@ -3,6 +3,8 @@ package com.ecommerce.desktop.Controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,18 +18,23 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.ecommerce.desktop.DTO.ProductDTO;
 import com.ecommerce.desktop.DTO.ProductFetchDTO;
 import com.ecommerce.desktop.DTO.ProductResponse;
+import com.ecommerce.desktop.DTO.RegisterResponse;
 import com.ecommerce.desktop.DTO.ResponseTemplate;
 import com.ecommerce.desktop.DTO.StoreDTO;
+import com.ecommerce.desktop.DTO.UserDTO;
 import com.ecommerce.desktop.Model.Cart;
 import com.ecommerce.desktop.Model.Product;
 import com.ecommerce.desktop.Model.Shipping;
 import com.ecommerce.desktop.Model.Store;
 import com.ecommerce.desktop.Model.Transaction;
+import com.ecommerce.desktop.Model.User;
+import com.ecommerce.desktop.Services.Authentication;
 import com.ecommerce.desktop.Services.CartManagement;
 import com.ecommerce.desktop.Services.ProductManagement;
 import com.ecommerce.desktop.Services.ShippingManagement;
 import com.ecommerce.desktop.Services.StoreManagement;
 import com.ecommerce.desktop.Services.TransactionManagement;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/api")
@@ -47,6 +54,29 @@ public class MainController {
 
   @Autowired
   private TransactionManagement transactionManagement;
+
+  @Autowired
+  private Authentication authService;
+
+  @PostMapping("/user")
+  public ResponseEntity<RegisterResponse> addUser(@RequestBody User newUser) {
+    UserDTO userDTO = new UserDTO(newUser.getEmail(), newUser.getName(), newUser.getTelepon(), newUser.getAddress());
+    if (authService.register(newUser)) {
+      return ResponseEntity.ok(new RegisterResponse("200", "User registered successfully", userDTO));
+    } else {
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .body(new RegisterResponse("500", "User registration failed", null));
+    }
+  }
+
+  @DeleteMapping("/user/{id}")
+  public @ResponseBody RegisterResponse deleteUser(@PathVariable("id") String id) {
+    if (authService.deleteUser(id)) {
+      return new RegisterResponse("200", "User deleted successfully", null);
+    } else {
+      return new RegisterResponse("500", "Failed to delete user", null);
+    }
+  }
 
   @PostMapping("/products")
   public @ResponseBody ProductResponse addProduct(@RequestBody Product newProduct) {
@@ -254,6 +284,38 @@ public class MainController {
       }
     } else {
       return new ResponseTemplate(500, "Failed to fetch cart", null);
+    }
+  }
+
+  @PutMapping("/shipping/{shippingId}/status/{status}")
+  public @ResponseBody ResponseTemplate updateShippingStatus(@PathVariable("shippingId") String shippingId,
+      @PathVariable("status") String status) {
+        System.out.println("statusnya: "+status);
+    if (shippingManagement.updateShippingStatus(shippingId, status)) {
+      return new ResponseTemplate(200, "Shipping status updated successfully", null);
+    } else {
+      return new ResponseTemplate(500, "Failed to update shipping status", null);
+    }
+  }
+
+  @GetMapping("/shipping/{shippingId}")
+  public @ResponseBody ResponseTemplate getShippingData(@PathVariable("shippingId") String shippingId) {
+    Shipping shippingData = shippingManagement.getShippingData(shippingId);
+    if (shippingData != null) {
+      return new ResponseTemplate(200, "Shipping data fetched successfully", shippingData);
+    } else {
+      return new ResponseTemplate(500, "Failed to fetch shipping data", null);
+    }
+  }
+
+  /// Transaction Management
+  @GetMapping("/transaction/{transactionId}")
+  public @ResponseBody ResponseTemplate getTransaction(@PathVariable("transactionId") String transactionId) {
+    Transaction transaction = transactionManagement.getTransaction(transactionId);
+    if (transaction != null) {
+      return new ResponseTemplate(200, "Transaction fetched successfully", transaction);
+    } else {
+      return new ResponseTemplate(500, "Failed to fetch transaction", null);
     }
   }
 
