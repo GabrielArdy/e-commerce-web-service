@@ -23,7 +23,7 @@ public class Website {
   public ResponseEntity<Object> updateShippingStatus(String shippingId, String status) {
     try {
       restTemplate.put(API_URL + "/shipping/" + shippingId + "/status/" + status, null);
-      return ResponseEntity.ok(new ResponseObject(200, "Product Updated Successfuly"));
+      return ResponseEntity.ok(new ResponseObject(200, "Shipping Updated Successfuly"));
     } catch (Exception e) {
       return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
