@@ -307,15 +307,6 @@ public class MainController {
     }
   }
 
-  @GetMapping("/shipping/{receipt}")
-  public @ResponseBody ResponseTemplate getShippingByReceipt(@PathVariable("receipt") String receipt) {
-    if (shippingManagement.getShippingByReceipt(receipt)) {
-      return new ResponseTemplate(200, "Shipping data fetched successfully", null);
-    } else {
-      return new ResponseTemplate(500, "Failed to fetch shipping data", null);
-    }
-  }
-
   /// Transaction Management
   @GetMapping("/transaction/{transactionId}")
   public @ResponseBody ResponseTemplate getTransaction(@PathVariable("transactionId") String transactionId) {
