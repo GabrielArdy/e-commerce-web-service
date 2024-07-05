@@ -60,7 +60,7 @@ public class MainController {
 
   @PostMapping("/user")
   public ResponseEntity<RegisterResponse> addUser(@RequestBody User newUser) {
-    UserDTO userDTO = new UserDTO(newUser.getEmail(), newUser.getName());
+    UserDTO userDTO = new UserDTO(newUser.getEmail(), newUser.getName(), newUser.getTelepon(), newUser.getAddress());
     if (authService.register(newUser)) {
       return ResponseEntity.ok(new RegisterResponse("200", "User registered successfully", userDTO));
     } else {

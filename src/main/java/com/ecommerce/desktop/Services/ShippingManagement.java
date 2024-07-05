@@ -14,9 +14,11 @@ import com.ecommerce.desktop.Model.Cart;
 import com.ecommerce.desktop.Model.Shipping;
 import com.ecommerce.desktop.Model.Store;
 import com.ecommerce.desktop.Model.Transaction;
+import com.ecommerce.desktop.Model.User;
 import com.ecommerce.desktop.Repository.ShippingRepository;
 import com.ecommerce.desktop.Repository.StoreRepository;
 import com.ecommerce.desktop.Repository.TransactionRepository;
+import com.ecommerce.desktop.Repository.UserRepository;
 import com.ecommerce.desktop.Util.Randomizer;
 
 @Service
@@ -31,10 +33,21 @@ public class ShippingManagement {
   @Autowired
   private TransactionRepository transactionRepository;
 
+  @Autowired
+  private UserRepository userRepository;
+
   public @ResponseBody boolean generateShippingData(Cart cart) {
     if (cart == null || cart.getProducts().isEmpty()) {
       return false;
     }
+
+    // Fetch user details
+    Optional<User> userOptional = userRepository.findById(cart.getUserId());
+    if (!userOptional.isPresent()) {
+      return false;
+    }
+
+    User user = userOptional.get();
 
     Shipping shipping = new Shipping();
     ProductList product = cart.getProducts().get(0);
@@ -48,7 +61,8 @@ public class ShippingManagement {
 
     shipping.setId("shp-" + cart.getUserId() + "-" + Randomizer.generateRandomNumber(5));
     shipping.setSender(new Person(store.getStoreName(), store.getTelpNumber(), store.getLocation()));
-    shipping.setReceiver(new Person("Dummy", "08123456789", "Jakarta"));
+    // Set the receiver to the actual user details
+    shipping.setReceiver(new Person(user.getName(), user.getTelepon(), user.getAddress()));
     shipping.setShippingType("Standard");
 
     double shippingCost = calculateShippingCost(shipping.getShippingType(), product.getQuantity());
@@ -68,7 +82,6 @@ public class ShippingManagement {
     shippingRepository.save(shipping);
     return true;
   }
-
   // public @ResponseBody boolean shippingData(String TransactionId) {
   // Transaction transaction =
   // transactionRepository.findById(TransactionId).orElse(null);
