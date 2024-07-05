@@ -179,7 +179,18 @@ public class ShippingManagement {
   public @ResponseBody boolean updateShippingStatus(String id, String status) {
     Shipping shipping = shippingRepository.findById(id).orElse(null);
     if (shipping != null) {
-      shipping.setShippingStatus(status);
+      if (status.equals("IT")) {
+        shipping.setShippingStatus(ShippingStatusChecker(status));
+      } else if (status.equals("DL")) {
+        shipping.setShippingStatus(ShippingStatusChecker(status));
+      } else if (status.equals("RT")) {
+        shipping.setShippingStatus(ShippingStatusChecker(status));
+      } else if (status.equals("PH")) {
+        shipping.setShippingStatus(ShippingStatusChecker(status));
+      } else {
+        return false;
+
+      }
       shippingRepository.save(shipping);
       return true;
     }
@@ -221,6 +232,23 @@ public class ShippingManagement {
         return "SD-" + Randomizer.generateRandomNumber(10);
       default:
         throw new IllegalArgumentException("Invalid shipping type: " + shippingType);
+    }
+  }
+
+  private String ShippingStatusChecker(String code) {
+    if (code.equals("IT")) {
+      return "In Transit";
+    }
+    if (code.equals("DL")) {
+      return "Delivered";
+    }
+    if (code.equals("RT")) {
+      return "Returned";
+    }
+    if (code.equals("PH")) {
+      return "Processing In Hub";
+    } else {
+      return "Invalid Shipping Status";
     }
   }
 }
