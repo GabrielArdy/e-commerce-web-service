@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
@@ -14,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gateway.desktop.DataObject.DataObject;
 import com.gateway.desktop.DataObject.Product;
+import com.gateway.desktop.DataObject.ResponseObject;
 import com.gateway.desktop.DataObject.Store;
 
 @RestController
@@ -35,7 +37,7 @@ public class Desktop {
       DataObject dataObject = objectMapper.readValue(response, DataObject.class);
       return ResponseEntity.ok(dataObject);
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
@@ -46,28 +48,28 @@ public class Desktop {
       DataObject dataObject = objectMapper.readValue(response, DataObject.class);
       return ResponseEntity.ok(dataObject);
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
   @PostMapping("/products")
-  public ResponseEntity<Object> createProduct(Product product) {
+  public ResponseEntity<Object> createProduct(@RequestBody Product product) {
     try {
       String response = restTemplate.postForObject(API_URL + "/products", product, String.class);
       DataObject dataObject = objectMapper.readValue(response, DataObject.class);
       return ResponseEntity.ok(dataObject);
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
   @PutMapping("/products/{id}")
-  public ResponseEntity<Object> updateProduct(@PathVariable("id") String id, Product product) {
+  public ResponseEntity<Object> updateProduct(@PathVariable("id") String id, @RequestBody Product product) {
     try {
       restTemplate.put(API_URL + "/products/" + id, product);
-      return ResponseEntity.ok().build();
+      return ResponseEntity.ok(new ResponseObject(200, "Product Updated Successfuly"));
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
@@ -75,9 +77,9 @@ public class Desktop {
   public ResponseEntity<Object> deleteProduct(@PathVariable("id") String id) {
     try {
       restTemplate.delete(API_URL + "/products/" + id);
-      return ResponseEntity.ok().build();
+      return ResponseEntity.ok(new ResponseObject(200, "Product Deleted Successfuly"));
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
@@ -90,28 +92,28 @@ public class Desktop {
       DataObject dataObject = objectMapper.readValue(response, DataObject.class);
       return ResponseEntity.ok(dataObject);
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
   @PostMapping("/stores")
-  public ResponseEntity<Object> createStore(Store store) {
+  public ResponseEntity<Object> createStore(@RequestBody Store store) {
     try {
       String response = restTemplate.postForObject(API_URL + "/stores", store, String.class);
       DataObject dataObject = objectMapper.readValue(response, DataObject.class);
       return ResponseEntity.ok(dataObject);
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
   @PutMapping("/stores/{id}")
-  public ResponseEntity<Object> updateStore(@PathVariable("id") String id, Store store) {
+  public ResponseEntity<Object> updateStore(@PathVariable("id") String id, @RequestBody Store store) {
     try {
       restTemplate.put(API_URL + "/stores/" + id, store);
-      return ResponseEntity.ok().build();
+      return ResponseEntity.ok(new ResponseObject(200, "Store Updated Successfuly"));
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
@@ -119,9 +121,9 @@ public class Desktop {
   public ResponseEntity<Object> deleteStore(@PathVariable("id") String id) {
     try {
       restTemplate.delete(API_URL + "/stores/" + id);
-      return ResponseEntity.ok().build();
+      return ResponseEntity.ok(new ResponseObject(200, "Store Deleted Successfuly"));
     } catch (Exception e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
+      return ResponseEntity.badRequest().body(new ResponseObject(400, e.getMessage()));
     }
   }
 
