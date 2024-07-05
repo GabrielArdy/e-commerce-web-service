@@ -290,6 +290,7 @@ public class MainController {
   @PutMapping("/shipping/{shippingId}/status/{status}")
   public @ResponseBody ResponseTemplate updateShippingStatus(@PathVariable("shippingId") String shippingId,
       @PathVariable("status") String status) {
+        System.out.println("statusnya: "+status);
     if (shippingManagement.updateShippingStatus(shippingId, status)) {
       return new ResponseTemplate(200, "Shipping status updated successfully", null);
     } else {
